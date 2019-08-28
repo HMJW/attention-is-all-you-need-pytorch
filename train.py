@@ -15,6 +15,7 @@ import transformer.Constants as Constants
 from dataset import TranslationDataset, paired_collate_fn
 from transformer.Models import Transformer
 from transformer.Optim import ScheduledOptim
+import os
 
 def cal_performance(pred, gold, smoothing=False):
     ''' Apply label smoothing if needed '''
@@ -216,11 +217,10 @@ def main():
     parser.add_argument('-save_model', default=None)
     parser.add_argument('-save_mode', type=str, choices=['all', 'best'], default='best')
 
-    parser.add_argument('-no_cuda', action='store_true')
+    parser.add_argument("-gpu", default="-1", help="gpu id")
     parser.add_argument('-label_smoothing', action='store_true')
 
     opt = parser.parse_args()
-    opt.cuda = not opt.no_cuda
     opt.d_word_vec = opt.d_model
 
     #========= Loading Dataset =========#
@@ -238,8 +238,8 @@ def main():
             'The src/tgt word2idx table are different but asked to share word embedding.'
 
     print(opt)
-
-    device = torch.device('cuda' if opt.cuda else 'cpu')
+    os.environ['CUDA_VISIBLE_DEVICES'] = opt.gpu
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     transformer = Transformer(
         opt.src_vocab_size,
         opt.tgt_vocab_size,
